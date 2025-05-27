@@ -20,6 +20,7 @@ function App() {
         setError(null);
         try {
             const response = await getEmpleados();
+            console.log('Datos recibidos en fetchEmpleados:', response.data);
             setEmpleados(response.data);
         } catch (err) {
             console.error("Error fetching empleados:", err);
