@@ -1,4 +1,3 @@
-// server/server.js
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
@@ -11,9 +10,6 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// ================================================================= //
-// DEFINE LA FUNCIÓN parseRolesSafely AQUÍ ARRIBA, ANTES DE LAS RUTAS //
-// ================================================================= //
 function parseRolesSafely(rolesData, empleadoIdParaLog) {
     let parsedRoles = [];
     if (rolesData && typeof rolesData === 'string' && rolesData.trim() !== '') {
@@ -28,17 +24,13 @@ function parseRolesSafely(rolesData, empleadoIdParaLog) {
             parsedRoles = [];
         }
     } else if (Array.isArray(rolesData)) {
-        // Si por alguna razón el driver ya lo devuelve como array
         parsedRoles = rolesData;
     } else if (rolesData) {
-        // Si rolesData existe pero no es un string parseable o es un string vacío
         console.warn(`Roles para empleado ID ${empleadoIdParaLog} no es un string parseable (valor: '${rolesData}', tipo: ${typeof rolesData}). Se usará un array vacío.`);
         parsedRoles = [];
     }
-    // Si rolesData es null o undefined, parsedRoles ya es []
     return parsedRoles;
 }
-// ================================================================= //
 
 const validateEmpleadoInput = (data, isUpdate = false) => {
     const errors = {};
@@ -58,8 +50,6 @@ const validateEmpleadoInput = (data, isUpdate = false) => {
     };
 };
 
-
-// CREAR
 app.post('/api/empleados', async (req, res) => {
     const { errors, isValid } = validateEmpleadoInput(req.body);
     if (!isValid) return res.status(400).json({ message: "Errores de validación", errors });
@@ -79,38 +69,29 @@ app.post('/api/empleados', async (req, res) => {
     }
 });
 
-// LEER TODOS
-// server/server.js - Ruta GET /api/empleados
 app.get('/api/empleados', async (req, res) => {
     try {
         const [rows] = await db.execute('SELECT id, nombre_completo, correo_electronico, sexo, area, roles FROM empleados ORDER BY nombre_completo ASC');
 
         const empleados = rows.map(emp => {
             let parsedRoles = [];
-            // Solo intentar parsear si emp.roles es un string y no está vacío
             if (emp.roles && typeof emp.roles === 'string' && emp.roles.trim() !== '') {
                 try {
                     parsedRoles = JSON.parse(emp.roles);
-                    // Asegurar que el resultado del parseo es un array
                     if (!Array.isArray(parsedRoles)) {
                         console.warn(`Roles para empleado ID ${emp.id} (valor: '${emp.roles}') no se parseó como array, se recibió:`, parsedRoles, ". Se usará un array vacío.");
                         parsedRoles = [];
                     }
                 } catch (parseError) {
-                    // Si falla el parseo, loguear el error y el valor problemático, y usar un array vacío.
                     console.error(`Error al parsear roles para empleado ID ${emp.id}. Valor original: '${emp.roles}'. Error: ${parseError.message}. Se usará un array vacío.`);
-                    parsedRoles = []; // Usar un array vacío como fallback
+                    parsedRoles = [];
                 }
             } else if (Array.isArray(emp.roles)) {
-                // Si por alguna razón el driver ya lo devuelve como array (poco común)
                 parsedRoles = emp.roles;
             } else if (emp.roles) {
-                // Si emp.roles existe pero no es un string (ej. si fuera un número, o un objeto ya parseado por el driver)
-                // o es un string vacío, se usa un array vacío.
                 console.warn(`Roles para empleado ID ${emp.id} no es un string parseable (valor: '${emp.roles}', tipo: ${typeof emp.roles}). Se usará un array vacío.`);
                 parsedRoles = [];
             }
-            // Si emp.roles es null o undefined, parsedRoles ya es []
 
             return {
                 ...emp,
@@ -119,13 +100,11 @@ app.get('/api/empleados', async (req, res) => {
         });
         res.json(empleados);
     } catch (error) {
-        // Este catch ahora sería para errores más generales (DB, etc.), no tanto para JSON.parse
         console.error("Error general al obtener empleados:", error);
         res.status(500).json({ message: 'Error interno del servidor al obtener empleados' });
     }
 });
 
-// LEER UNO
 app.get('/api/empleados/:id', async (req, res) => {
     try {
         const empleadoId = req.params.id;
@@ -136,7 +115,7 @@ app.get('/api/empleados/:id', async (req, res) => {
         }
 
         const empleado = rows[0];
-        empleado.roles = parseRolesSafely(empleado.roles, empleado.id); // Usando la función
+        empleado.roles = parseRolesSafely(empleado.roles, empleado.id);
         empleado.acepta_boletin = Boolean(empleado.acepta_boletin);
 
         res.json(empleado);
@@ -146,7 +125,6 @@ app.get('/api/empleados/:id', async (req, res) => {
     }
 });
 
-// ACTUALIZAR
 app.put('/api/empleados/:id', async (req, res) => {
     const { errors, isValid } = validateEmpleadoInput(req.body, true);
     if (!isValid) return res.status(400).json({ message: "Errores de validación", errors });
@@ -167,7 +145,6 @@ app.put('/api/empleados/:id', async (req, res) => {
     }
 });
 
-// ELIMINAR
 app.delete('/api/empleados/:id', async (req, res) => {
     try {
         const [result] = await db.execute('DELETE FROM empleados WHERE id = ?', [req.params.id]);

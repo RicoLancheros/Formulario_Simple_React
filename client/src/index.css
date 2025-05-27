@@ -1,13 +1,12 @@
-/* client/src/index.css - Opción 1: Forzar tema claro */
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
-  /* Forzar esquema claro y colores claros */
-  color-scheme: light; /* Solo light */
-  color: #213547;       /* Color de texto oscuro por defecto */
-  background-color: #ffffff; /* Fondo blanco por defecto */
+
+  color-scheme: light;
+  color: #213547;
+  background-color: #ffffff;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -21,7 +20,7 @@ a {
   text-decoration: inherit;
 }
 a:hover {
-  color: #747bff; /* Ajustado para tema claro, original era #535bf2 */
+  color: #747bff;
 }
 
 body {
@@ -35,7 +34,6 @@ body {
 h1 {
   font-size: 3.2em;
   line-height: 1.1;
-  /* color: #213547; /* Asegurar que hereda o se define */
 }
 
 button {
@@ -45,8 +43,8 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #f9f9f9; /* Fondo claro para botones */
-  color: #213547; /* Texto oscuro para botones */
+  background-color: #f9f9f9;
+  color: #213547;
   cursor: pointer;
   transition: border-color 0.25s;
 }
@@ -58,18 +56,3 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
-/* Eliminar o comentar el bloque @media (prefers-color-scheme: light) porque ya definimos el tema claro por defecto */
-/*
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
-}
-*/
