@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS empleados (
     CONSTRAINT chk_roles CHECK (JSON_VALID(roles))
 );
 
-# 2. Cambiar la contraseña en server.js a la de tu Mysql.
+# 2. Cambiar la contraseña en db.js a la de tu Mysql.
 
 # 3. Iniciar el Script dentro del proyecto (IniciarProyecto.bat). 
 
