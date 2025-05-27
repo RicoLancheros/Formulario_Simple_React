@@ -1,0 +1,8 @@
+.employee-list-container { margin-top: 20px; }
+.employee-list-container table { width: 100%; border-collapse: collapse; }
+.employee-list-container th, .employee-list-container td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+.employee-list-container th { background-color: #f2f2f2; }
+.button-edit { background-color: #ffc107; color: black; margin-right: 5px; padding: 5px 10px; border:none; border-radius:3px; cursor:pointer; }
+.button-delete { background-color: #dc3545; color: white; padding: 5px 10px; border:none; border-radius:3px; cursor:pointer; }
+.button-edit:hover { background-color: #e0a800; }
+.button-delete:hover { background-color: #c82333; }
