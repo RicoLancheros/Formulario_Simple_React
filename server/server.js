@@ -6,6 +6,9 @@ const db = require('./db');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// URL del servicio de notificaciones Go
+const NOTIFICATION_SERVICE_URL = process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:8080';
+
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -50,6 +53,36 @@ const validateEmpleadoInput = (data, isUpdate = false) => {
     };
 };
 
+// Función para enviar notificaciones al servicio Go
+async function sendNotification(type, email, data, subject = null) {
+    try {
+        const response = await fetch(`${NOTIFICATION_SERVICE_URL}/api/notifications/send`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                type,
+                email,
+                subject,
+                data
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        console.log(`📧 Notificación ${type} enviada a ${email}:`, result.message);
+        return result;
+    } catch (error) {
+        console.error(`❌ Error enviando notificación ${type} a ${email}:`, error.message);
+        // No fallar la operación principal si falla la notificación
+        return { success: false, error: error.message };
+    }
+}
+
 app.post('/api/empleados', async (req, res) => {
     const { errors, isValid } = validateEmpleadoInput(req.body);
     if (!isValid) return res.status(400).json({ message: "Errores de validación", errors });
@@ -59,6 +92,27 @@ app.post('/api/empleados', async (req, res) => {
         const rolesJson = JSON.stringify(roles || []);
         const query = 'INSERT INTO empleados (nombre_completo, correo_electronico, sexo, area, descripcion, acepta_boletin, roles) VALUES (?, ?, ?, ?, ?, ?, ?)';
         const [result] = await db.execute(query, [nombre_completo, correo_electronico, sexo, area, descripcion || null, acepta_boletin || false, rolesJson]);
+        
+        // Enviar notificaciones después de crear el empleado
+        const employeeData = {
+            id: result.insertId,
+            nombre_completo,
+            correo_electronico,
+            sexo,
+            area,
+            descripcion,
+            acepta_boletin,
+            roles
+        };
+
+        // Si acepta boletín, enviar email de bienvenida
+        if (acepta_boletin) {
+            sendNotification('welcome', correo_electronico, employeeData);
+        }
+
+        // Notificar sobre empleado creado (puedes configurar un email administrativo)
+        // sendNotification('employee_created', 'admin@empresa.com', employeeData);
+
         res.status(201).json({ id: result.insertId, message: 'Empleado creado exitosamente' });
     } catch (error) {
         console.error("Error al crear empleado:", error);
@@ -131,10 +185,35 @@ app.put('/api/empleados/:id', async (req, res) => {
 
     const { nombre_completo, correo_electronico, sexo, area, descripcion, acepta_boletin, roles } = req.body;
     try {
+        // Obtener datos anteriores del empleado
+        const [previousData] = await db.execute('SELECT acepta_boletin FROM empleados WHERE id = ?', [req.params.id]);
+        const previousAceptaBoletin = previousData.length > 0 ? Boolean(previousData[0].acepta_boletin) : false;
+
         const rolesJson = JSON.stringify(roles || []);
         const query = 'UPDATE empleados SET nombre_completo = ?, correo_electronico = ?, sexo = ?, area = ?, descripcion = ?, acepta_boletin = ?, roles = ? WHERE id = ?';
         const [result] = await db.execute(query, [nombre_completo, correo_electronico, sexo, area, descripcion || null, acepta_boletin || false, rolesJson, req.params.id]);
         if (result.affectedRows === 0) return res.status(404).json({ message: 'Empleado no encontrado para actualizar' });
+        
+        // Enviar notificaciones después de actualizar
+        const employeeData = {
+            id: req.params.id,
+            nombre_completo,
+            correo_electronico,
+            sexo,
+            area,
+            descripcion,
+            acepta_boletin,
+            roles
+        };
+
+        // Si el empleado se suscribió al boletín por primera vez
+        if (acepta_boletin && !previousAceptaBoletin) {
+            sendNotification('welcome', correo_electronico, employeeData);
+        }
+
+        // Notificar sobre empleado actualizado
+        // sendNotification('employee_updated', correo_electronico, employeeData);
+
         res.json({ message: 'Empleado actualizado exitosamente' });
     } catch (error) {
         console.error("Error al actualizar empleado:", error);

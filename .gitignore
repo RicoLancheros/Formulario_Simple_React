@@ -1,4 +1,4 @@
-# .gitignore Patterns for a Node.js project
+# .gitignore Patterns for a Node.js + Go project
 
 # Node modules
 node_modules/
@@ -46,3 +46,23 @@ coverage/
 
 # Others
 *.tgz
+
+# Go binaries and build artifacts
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Go test binary, built with `go test -c`
+*.test
+
+# Go output binary (for notification-service)
+notification-service/notification-service
+notification-service/notification-service.exe
+
+# Go module download cache
+go/pkg/mod/
+
+# Go workspace file
+go.work
